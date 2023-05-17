@@ -1,0 +1,264 @@
+module cisco-yang-push {
+    namespace "urn:cisco:params:xml:ns:yang:yang-push:v1";
+    prefix push;
+    import ietf-yang-types { prefix yang; }
+    organization
+       "Cisco Systems, Inc.";
+     contact
+       "Cisco Systems, Inc.
+        Customer Service
+        Postal: 170 W Tasman Drive
+                San Jose, CA 95134
+        Tel: +1 1800 553-NETS
+        E-mail: cs-yang@cisco.com";
+   description
+    "This module contains schema for YANG push notification.";
+  revision 2016-03-21 {
+    description
+      "Initial Draft.";
+    reference
+    "YANG Datastore Push, draft-ietf-netconf-yang-push-02
+     Yang Push through Restconf.
+    ";
+  }
+  identity subscription-result {
+    description
+      "Base identity for responses to requests surrounding
+       management (e.g. creation, modification) of
+       subscriptions.";
+  }
+  identity ok {
+    base subscription-result;
+    description
+      "OK - subscription was successful and was performed as requested.";
+  }
+  identity error {
+    base subscription-result;
+    description
+      "subscription was not successful.
+       Base identity for error return codes.";
+  }
+  identity error-no-such-subscription {
+    base error;
+    description
+      "A subscription with the requested subscription ID
+       does not exist.";
+  }
+  identity error-no-such-option {
+    base error;
+    description
+      "A requested parameter setting is not supported.";
+  }
+  identity error-insufficient-resources {
+    base error;
+    description
+      "The server has insufficient resources to support the
+       subscription as requested.";
+  }
+  identity error-data-not-authorized {
+    base error;
+    description
+     "No read authorization for a requested data.";
+  }
+  identity error-other {
+    base error;
+    description
+      "An unspecified error has occurred (catch all).";
+  }
+  identity subscription-errors {
+    description
+      "Base identity for subscription error status.
+       This identity is not to be confused with error return
+       codes for RPCs";
+      }
+  identity internal-error {
+    base subscription-errors;
+    description
+      "Subscription failures caused by server internal error.";
+  }
+  identity no-resources {
+    base subscription-errors;
+    description
+      "Lack of resources, e.g. CPU, memory, bandwidth";
+  }
+  identity subscription-deleted {
+    base subscription-errors;
+    description
+      "The subscription was terminated because the subscription
+       was deleted.";
+  }
+  identity other {
+    base subscription-errors;
+    description
+      "Fallback reason - any other reason";
+  }
+
+typedef subscription-id {
+    	type uint32;
+    	description
+      	"A type for subscription identifiers.";
+  	}
+
+  /* Identity for update-change types */
+  identity change-type {
+  	description "base Identity for change-update type ";
+  }
+  identity create {
+  	base change-type;
+  	description
+          "A new managed object was created";
+  }
+  identity modify {
+  	base change-type;
+  	description
+          "The value of a managed object has been changed";
+  }
+  identity delete {
+  	base change-type;
+  	description
+          "A managed object was deleted";
+  }
+  identity configure {
+  	base change-type;
+  	description
+      		"configuration or provisioning response";
+  }
+  identity ha {
+  	base change-type;
+  	description
+      		"HA notification";
+  }
+
+   /* Define a holder for Create,  Attribute Value Change(AVC), delete objects or configuration response*/
+   grouping update-data {
+        description "holderfor Create,  Attribute Value Change(AVC) or delete  objects";
+
+        container update-data {
+            description
+            "Holder for any object Create, AVC object that are managed by the controller.
+
+            Also include configuration or provisioning responses  ";
+        }
+        container config-response {
+        	leaf request-id {
+        		type string;
+        		description "The request ID corresponding to the current response";
+        	}
+        	leaf config-response {
+        		type string;
+        		description "configuration response";
+        	}
+        }
+        container update-fdn {
+        	leaf fdn {
+        		type string;
+        		description "Object represented by the Fully Distinguished Name for delete or summary use cases";
+        	}
+        }
+        container update-message {
+        	leaf message {
+        		type string;
+        		description "Sending out abstract messages to the client";
+        	}
+        }
+
+        container ha-notification {
+        	leaf operation-type {
+        		type string;
+        		description "The type of operation that triggered this event - Failover or Failback";
+        	}
+        	leaf host {
+        		type string;
+        		description "The host address of the currently active machine";
+        	}
+        	leaf message {
+        		type string;
+        		description "Object represented by the Fully Distinguished Name for delete or summary use cases";
+        	}
+        }
+   }
+
+  container push-change-update {
+    description
+      "This notification contains an on-change push update.
+       This notification shall only be sent to the receivers
+       of a subscription; it does not constitute a general-purpose
+       notification.";
+    leaf subscription-id {
+      type subscription-id;
+      description
+        "This references the subscription because of which the
+         notification is sent.";
+    }
+    leaf request-id {
+      type string;
+      description
+        "This references the service or configuration request identifier  .";
+    }
+    leaf topic {
+      type string;
+      mandatory true;
+      description
+        "This references the subscription topic for which the
+         notification is sent.";
+    }
+    leaf time-of-update {
+      type yang:date-and-time;
+      description
+       "This leaf contains the time of the update, i.e. the
+         time at which the change was observed.";
+    }
+    leaf operation {
+         type identityref {
+         	base change-type;
+         }
+         description
+         "Create, Modify, Delete or Configuration";
+    }
+    uses update-data;   // includes object create, modify, delete or configuration
+  }
+
+  container notification-subscription {
+    description
+      "This is the record of a subscriber in the database";
+    leaf subscription-id {
+      type subscription-id;
+      mandatory true;
+      description
+        "This references the subscription because of which the
+         notification is sent.";
+    }
+    leaf subscribed-user {
+      type string;
+      mandatory true;
+      description
+        "This references the user who has subscribed to the current topic";
+    }
+     leaf endpoint-url {
+      type string;
+      mandatory true;
+      description
+        "This references the subscription topic for which the
+         notification is sent.";
+    }
+    leaf topic {
+      type string;
+      mandatory true;
+      description
+        "This references the subscription topic for which the
+         notification is sent.";
+    }
+    leaf creation-time {
+      type yang:date-and-time;
+      description
+       "This leaf contains the time of the creation, i.e. the
+         time at which the change was observed.";
+    }
+    leaf time-of-update {
+      type yang:date-and-time;
+      description
+       "This leaf contains the time of the update, i.e. the
+         time at which the change was observed.";
+    }
+  }
+}

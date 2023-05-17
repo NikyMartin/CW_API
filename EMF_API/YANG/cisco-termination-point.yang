@@ -1,0 +1,471 @@
+module cisco-termination-point {
+    namespace "urn:cisco:params:xml:ns:yang:nrf-tp:v1";
+    prefix tp;
+
+    import ietf-inet-types { prefix inet; }
+    import ietf-yang-types { prefix yang; }
+    import cisco-common-types { prefix com; }
+    import cisco-mpls-te-extension { prefix mplste; }
+    import cisco-tdm-cem-extension { prefix cem; }
+    import cisco-carrier-ethernet-extension { prefix ce; }
+    import cisco-mpls-l3vpn-extension { prefix mplsvpn; }
+    import cisco-optical-circuit-extension {prefix opt; }
+    import cisco-lag { prefix lag; } 
+    import cisco-layer-rates { prefix lr; }
+
+    organization "Cisco Systems, Inc.";
+    contact "Cisco Systems Inc. Author: <mailto:epnm-yang@cisco.com>";
+    description
+        "This module contains all YANG data types to represent Termination Point Data. Copyright
+        (c) 2016 Cisco Systems Inc";
+    revision 2016-02-15 {
+        description "This revision has the following changes: - initial draft";
+        reference "none";
+    }
+
+
+    /* Technology specific PTP  */
+    grouping router-cluster-control-grouping {
+        leaf priority {
+            type string;
+            description " a";
+        }
+        leaf rsp-node {
+            type string;
+        }
+        leaf state {
+            type string;
+            description "the router cluster member IRL or RSP state ";
+
+        }
+        leaf connectingPort {
+            type string;
+        }
+    }
+
+    grouping router-cluster-irl-grouping {
+        leaf rsp-node {
+            type string;
+        }
+        leaf state {
+            type string;
+            description "the router cluster member IRL or RSP state ";
+        }
+       	leaf connectingPort {
+            type string;
+        }
+
+    }
+
+
+
+    grouping base-tp-grouping {
+        description "Generic termination piont ";
+
+        //uses com:common-object-attributes;
+
+        leaf directionality {
+            type identityref {
+                base com:directionality;
+            }
+            default com:tp-bidirectional;
+            description "TP direction indicator - bi-directional, source or sink";
+        }
+
+        leaf is-edge-point {
+            type boolean;
+            description "Indicates if the TP is an edge point of at least one virtual network, i.e. if it is an end point of a potential inter-network topological link.";
+        }
+        leaf ingress-qos-policy-name {
+            type string;
+            description "The associated input QoS policy name on the device";
+        }
+        leaf egress-qos-policy-name {
+            type string;
+            description "The associated output QoS Policy on the device";
+        }
+
+        leaf type {
+            type string;
+            description "Termination Point Type. This corresponds to IFMIB IfType";
+        }
+
+        leaf is-promiscuous {
+            type boolean;
+        }
+        leaf mac-address {
+            type yang:mac-address;
+        }
+    	leaf loopback {
+            type inet:ip-address;
+        }
+        leaf mtu {
+            type uint32;
+        }
+        leaf supported-mtu {
+            type string;
+            description " a list of supported mtu sizes";
+        }
+        leaf-list ip-address {
+            type inet:ip-address;
+            description "IP address";
+        }
+        leaf flow-control {
+            type string;
+            description "Ethernet flow control mode";
+        }
+        leaf is-span-monitored {
+            type boolean;
+            description "Indicator that the interface is monitored ";
+        }
+        leaf is-trap-enabled {
+            type boolean;
+        }
+        leaf is-connector-present {
+            type string;
+        }
+        leaf alarm-status {
+            type string;
+        }
+        leaf remote-equipment-ref {
+            type com:fdn;
+            description " the FDN of the remote equipment that associats with this PTP; ex. satellite device";
+        }
+        leaf associated-port-name {
+            type string;
+            description " the name of the associated port ";
+
+        }
+        leaf loopback-state {
+            description "Loopback state for SONET/SDH, Ethernet, FC/FICON and OTN interfaces. Make it a type string, so that it fits TDM CEM,  ";
+            type enumeration {
+                enum internal {
+                    description "internal or  local";
+                }
+                enum line {
+                    description "";
+                }
+                enum no-loopback {
+                    description "No loopback is configured";
+                }
+            }
+        }
+
+        leaf owningSatelliteId {
+            type string;
+        }
+
+        leaf if-speed {
+            type string;
+            description "interface speed";
+        }
+
+        leaf duplex-mode {
+            description "interface duplex mode";
+            type enumeration {
+                enum UNKNOWN { value 0; }
+                enum HALFDUPLEX { value 1; }
+                enum FULLDUPLEX { value 2; }
+                enum DISAGREE { value 3; }
+                enum AUTO_NEGOTIATE { value 4; }
+            }
+        }
+
+        leaf configured-pluggable-type {
+            description "VCOP Configured Pluggable Type";
+            type enumeration {
+                enum NONE { value 0; }
+                enum OC3 { value 1; }
+                enum OC12 { value 2; }
+                enum DS3 { value 3; }
+            }
+        }
+
+        container router-cluster-control {
+            uses router-cluster-control-grouping;
+        }
+        container router-cluster-irl {
+            uses router-cluster-irl-grouping;
+        }
+        leaf soak-time {
+            type int32;
+            description "Soak time in minutes";
+        }
+    }
+
+    grouping termination-point-grouping {
+        description "Virtual connection termination piont; i.e. Layered Protocal Endpoint ";
+        uses base-tp-grouping;
+        container isis {
+            description "ISIS metric information for mpls layer interfaces";
+            leaf level1-metric {
+               type uint64;
+               description "ISIS Level-1 metric ";
+            }
+            leaf level2-metric {
+               type uint64;
+               description "ISIS Level-2 metric ";
+            }
+        }
+        container ospf {
+            description "OSPF metric information for mpls layer interfaces";
+            leaf metric {
+               type uint64;
+               description "OSPF metric ";
+            }
+        }
+
+        container flowpoint-bfd-parameters {
+            description "Specifies BFD aspect of the TE Tunnel or Carrier-E or L3VPN  Flowpoint";
+            uses mplste:flowpoint-bfd-grouping;
+        }
+
+        container mpls-te-tunnel-tp {
+            description "mplste tunnel end specific parameters";
+            uses mplste:mpls-te-tunnel-flowpoint-grouping;
+        }
+        container tdm-cem-tp {
+            description "tdm cem specific parameters";
+            uses cem:tdm-cem-tp-grouping;
+        }
+        container ce-tp {
+             description "ce specific parameters";
+             uses ce:ethernet-flowpoint-grouping;
+        }
+        container ip-tp {
+            description "IP flowpoint specific parameters";
+            uses mplsvpn:ip-flowpoint-grouping;
+        }
+        container tdm-port {
+            uses opt:tdm-pep-grouping;
+            description "TDM port attributes  ";
+        }
+        container optical-auto-laser-shutdown {
+             uses opt:als-attributes;
+             description "Automatical Laser Shutdown Maintenance related attributes ";
+        }
+
+        container optical-timing-attributes {
+            uses opt:timing-attributes;
+            description " Optical timing synchronization attributes ";
+        }
+
+        container optical-attributes {
+            uses opt:optical-tp-grouping;
+            description "Common optical TP attributes ";
+        }
+        
+        list optical-breakout-lane-attribute-list{
+            key lane-number;
+            uses opt:optical-breakout-lane-grouping;
+            description "Optical sub-interfaces. Applicable for optical break out port mode ";
+        }
+        
+        container optical-breakout-lane-list {
+            list optical-breakout-lane {
+                key lane-number;
+                uses opt:optical-breakout-lane-grouping;
+                description "Optical sub-interfaces. Applicable for optical break out port mode ";
+            }
+        }
+
+        container optical-logo-attributes {
+            uses opt:common-logo-attributes; // common set of LOGO parameters apply to both topological link and PTP
+            uses opt:ptp-logo-attributes;  // additional ptp/port level LOGO parameters
+        }
+        container otn-attributes {
+            uses opt:otn-tp-grouping;
+            description "OTN interface attributes ";
+        }
+
+        container otn-odu-attributes {
+            uses opt:otn-odu-tcm-tti-grouping;
+            description "OTN interface Tadem Connection Monitoring and Trail Trace Identity attributes ";
+        }
+
+        container och-attributes {
+            uses opt:och-tp-grouping;
+            description "OCH  ";
+        }
+
+        container dsp-attributes {
+            uses opt:dsp-tp-grouping;
+            description "DSP controllers  ";
+        }
+
+        container oduk-attributes {
+            uses opt:otn-oduk-tp-grouping;
+            description "OTN interface Tadem Connection Monitoring and Trail Trace Identity attributes ";
+        }
+        
+         // OTS Port configurations for Auto Node Setup
+        container ots-attributes {
+            uses opt:ots-attributes-grouping;
+            description " Attributes associated with OTS termination point   ";
+        }
+        
+        container lag {
+            description " Link Aggregation Group ";
+            uses lag:lag-grouping;
+            container member-list {
+               
+             uses lag:lag-member-grouping;
+             
+           }
+         }
+    }
+
+    grouping set-termination-point-grouping {
+
+        description "Internal holder for generic set-termination-point-response";
+
+        container model-config-result-list {
+
+            list model-config-result{
+
+                key model-name;
+
+                leaf model-name {
+                    description "model name of the grouping.";
+                    type string;
+                }
+                leaf feature-name {
+                    description "feature name of the mbc component.";
+                    type string;
+                }
+                leaf config-status {
+                    description "configuration status from the MBC operation.";
+                    type string;
+                }
+                leaf deployed-configuration {
+                    type string;         
+                    description "Deployed configuration in CLI or other device configuration interfaces ";
+                }
+
+            }
+        }
+
+    }
+
+    container termination-point {
+        description " Generic termination pionts - ctp, ptp, ftp ....";
+        uses com:common-object-attributes;
+        uses termination-point-grouping;
+    }
+    container ctp {  //* Not being referenced
+        description " Virtual connection termination pionts - ctp";
+        uses com:common-object-attributes;
+        uses termination-point-grouping;
+    }
+
+    container set-termination-point-response {
+        description "contains the response for set termination point";
+        uses com:common-object-attributes;
+        uses set-termination-point-grouping;
+    }
+    
+    container configure-termination-point-request {
+    
+        leaf node-ref {
+            type com:fdn;
+            description "node reference that the TP configuration can be applied ";
+        }
+        container tp-parameter-list {
+            list tp-parameter {
+                key tp-ref;
+                leaf tp-ref {
+                    type com:fdn;
+                    description " Termination point reference (FDN). for susequent modify ";
+                
+                }
+                leaf layer-rate {
+                    type identityref {
+                        base lr:layer-rate;
+                    }
+                    description "technology layer rate of the termination point. ex.  lr-optical-transmission-section"; 
+                }
+                container ans-attributes {
+                    uses opt:ots-attributes-grouping;
+                }
+            }
+        }
+    }
+    container configure-termination-point-response {
+    
+        leaf node-ref {
+            type com:fdn;
+            description "node reference that the TP configuration can be applied ";
+        
+        }
+        container tp-parameter-list {
+        
+            list tp-parameter {
+                key tp-ref;
+                leaf tp-ref {
+                    type com:fdn;
+                    description " Termination point reference (FDN) ";
+                
+                }
+                leaf layer-rate {
+                    type identityref {
+                        base lr:layer-rate;
+                    }
+                    description "technology layer rate of the termination point ex.  lr-optical-transmission-section"; 
+                }
+                uses com:operation-response-grouping;
+                
+            }
+            
+        }
+        
+    }
+    // Grouping for ans node data retrieval
+    
+    grouping ans-node-data  {
+        description "ans node data grouping";
+        container ans-node-data-list {
+            list ans-node-data {
+                description "list of ans node data";
+                key ans-param;
+                leaf ans-param {
+                   description "ans param name";
+                   type string;
+                }
+                leaf ans-param-value {
+                    description "ans param value";
+                    type string;
+                }
+            }
+       }
+    }
+    
+    grouping automatic-node-setup-response {
+        description "Information about node setup";
+        leaf node-ref {
+            description "Device Name";
+            type string;
+        }
+        container tp-data-list {
+            list tp-data {
+                description "termination point";
+                key tp-ref;
+                leaf tp-ref {
+                    description "tp-ref from the list";
+                    type com:fdn;
+                }
+                uses ans-node-data;
+            }
+        }
+    }
+    
+    container automatic-node-setup-response {
+    description "ans retrieval response";
+    uses automatic-node-setup-response;
+    }
+    
+}
+
+
+// URL:  
+// Get     /restconf/data/v1/cisco-resource-ems:termination-point
+// PUT     /restconf/data/v1/cisco-resource-ems:configure-termination-point  only  for layer-rate = lr-optical-transmission-section OTS attributes 

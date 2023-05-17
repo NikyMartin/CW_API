@@ -1,0 +1,322 @@
+module cisco-layer-rates {
+    namespace "urn:cisco:params:xml:ns:yang:nrf-layer-rates:v1";
+    prefix lr;
+
+
+    organization "Cisco Systems, Inc.";
+    contact "Cisco Systems Inc. Author: <mailto:epnm-yang@cisco.com>";
+    description
+        "This module contains all technology layer rates. Copyright (c) 2016 Cisco Systems
+        Inc";
+    revision 2016-02-15 {
+        description "This revision has the following changes: - initial draft";
+        reference "none";
+    }
+
+    /* Typedefs */
+
+   
+    /* Technology Layer Rate */
+    identity layer-rate {
+        description
+        "Base Identity for different technology layer rates.";
+    }
+       
+    identity lr-pseudowire {
+        base layer-rate;
+        description "Identity for PW Layer ";
+    }
+    identity lr-ip {
+        base layer-rate;
+        description "Identity for IP Layer ";
+    }
+    identity lr-vfi {
+        base layer-rate;
+        description "Identity for VFI Layer ";
+    }
+    identity lr-ethernet {
+        base layer-rate;
+        description "Identity for Layer Rate Ethernet ";
+    }
+    identity lr-pseudowire-ethernet {
+        base layer-rate;
+        description "Identity for Ethernet pseudowire ";
+    }
+    
+    identity lr-lag-fragment {
+    	 base layer-rate;
+        description "Identity for Layer Rate IEEE802.3ad LAG or LagBasePort ";
+    }
+   
+    identity lr-sts {
+        base layer-rate;
+        description "Identity for Layer Rate STS ";
+    }
+    identity lr-vt {
+        base layer-rate;
+        description "Identity for Layer Rate VT ";
+    }
+
+    identity lr-gigabit-ethernet {
+        base layer-rate;
+        description "Identity for Layer Rate Gigabit Ethernet ";
+    }
+     identity lr-ten-gigabit-ethernet {
+        base layer-rate;
+        description "Identity for Layer Rate Ten Gigabit Ethernet ";
+    }
+     identity lr-ten-megabit-ethernet {
+         base layer-rate;
+         description "Identity for Layer Rate Ten Megabit Ethernet ";
+     }
+     identity lr-hundred-gigabit-ethernet {
+         base layer-rate;
+         description "Identity for Layer Rate Hundred Gigabit Ethernet ";
+     }
+     identity lr-hundred-megabit-ethernet {
+         base layer-rate;
+         description "Identity for Layer Rate Hundred Megabit Ethernet ";
+     }
+     identity lr-forty-gigabit-ethernet {
+         base layer-rate;
+         description "Identity for Layer Rate Forty Gigabit Ethernet ";
+     }
+     identity lr-twentyfive-gigabit-ethernet {
+         base layer-rate;
+         description "Identity for Layer Rate Twenty Five Gigabit Ethernet ";
+     }
+    identity lr-t1 {
+        base layer-rate;
+        description "Identity for Layer Rate T1 ";
+    }
+    identity lr-e1 {
+        base layer-rate;
+        description "Identity for Layer Rate E1";
+    }
+     identity lr-t3 {
+        base layer-rate;
+        description "Identity for Layer Rate T3 ";
+    }
+    identity lr-e3 {
+        base layer-rate;
+        description "Identity for Layer Rate E3";
+    }
+    identity lr-dsr-oc1-and-stm0 {
+        base layer-rate;
+        description "Identity for Layer Rate DSR OC1 or STS1 or STM0  ";
+    }
+    identity lr-dsr-oc3-and-stm1 {
+        base layer-rate;
+        description "Identity for Layer Rate DSR OC3 or STS3 or STM1";
+    }
+    identity lr-dsr-oc12-and-stm4 {
+        base layer-rate;
+        description "Identity for Layer Rate DSR OC12 or STS12 or STM4";
+    }
+    identity lr-dsr-oc24-and-stm8 {
+        base layer-rate;
+        description "Identity for Layer Rate DSR OC24 or STS24 or STM8";
+    }
+    identity lr-dsr-oc48-and-stm16 {
+        base layer-rate;
+        description "Identity for Layer Rate DSR OC48 or STS48 or STM16";
+    }
+    identity lr-dsr-oc192-and-stm64 {
+        base layer-rate;
+        description "Identity for Layer Rate DSR OC192 or STS192 or STM64";
+    }
+     identity lr-sts3-and-stm1 {
+        base layer-rate;
+        description "Identity for Layer Rate OC3 or STS3 or STM1";
+    }
+    identity lr-sts12-and-stm4 {
+        base layer-rate;
+        description "Identity for Layer Rate OC12 or STS12 or STM4";
+    }
+    identity lr-sts24-and-stm8 {
+        base layer-rate;
+        description "Identity for Layer Rate OC24 or STS24 or STM8";
+    }
+    identity lr-sts48-and-stm16 {
+        base layer-rate;
+        description "Identity for Layer Rate OC48 or STS48 or STM16";
+    }
+    identity lr-sts192-and-stm64 {
+        base layer-rate;
+        description "Identity for Layer Rate OC192 or STS192 or STM64";
+    }
+    identity lr-sts1-and-au3-high-order-vc3 {
+        base layer-rate;
+        description "Identity for Layer Rate sts1-and-au3-high-order-vc3";
+    }
+    identity lr-low-order-tu3-vc3 {
+        base layer-rate;
+        description "Identity for Layer Rate low-order-tu3-vc3";
+    }
+    identity lr-sts2c-and-vc3-2c {
+        base layer-rate;
+        description "Identity for Layer Rate lr-sts2c-and-vc3-2c";
+    }
+    identity lr-sts3c-and-au4-vc4 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-sts3c-and-au4-vc4";
+    }
+    identity lr-sts4c-and-vc3-4c {
+        base layer-rate;
+        description "Identity for Layer Rate lr-sts4c-and-vc3-4c";
+    }
+    identity lr-sts5c-and-vc3-5c {
+        base layer-rate;
+        description "Identity for Layer Rate lr-sts5c-and-vc3-5c";
+    }
+    identity lr-sts6c-and-vc4-2c {
+        base layer-rate;
+        description "Identity for Layer Rate sts6c-and-vc4-2c";
+    }
+    identity lr-sts7c-and-vc3-7c {
+        base layer-rate;
+        description "Identity for Layer Rate sts7c-and-vc3-7c";
+    }
+    identity lr-sts8c-and-vc3-8c {
+        base layer-rate;
+        description "Identity for Layer Rate sts8c-and-vc3-8c";
+    }
+    identity lr-sts9c-and-vc4-3c {
+        base layer-rate;
+        description "Identity for Layer Rate sts9c-and-vc4-3c";
+    }
+    identity lr-sts9c-and-vc4-4c {
+        base layer-rate;
+        description "Identity for Layer Rate sts9c-and-vc4-4c";
+    }
+    identity lr-sts9c-and-vc4-5c {
+        base layer-rate;
+        description "Identity for Layer Rate sts9c-and-vc4-5c";
+    }   
+    identity lr-vt1-5-and-tu11-vc11 {
+        base layer-rate;
+        description "Identity for Layer Rate vt1-5-and-tu11-vc11";
+    }
+    identity lr-vt2-and-tu12-vc12 {
+        base layer-rate;
+        description "Identity for Layer Rate vt2-and-tu12-vc12";
+    }
+    identity lr-vt3-and-tu1-vc1 {
+        base layer-rate;
+        description "Identity for Layer Rate vt3-and-tu1-vc1. ";
+    }
+    identity lr-vt6-and-tu2-vc2 {
+        base layer-rate;
+        description "Identity for Layer Rate vt6-and-tu2-vc2";
+    } 
+    identity lr-och-data-unit-c2-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-data-unit-c2-30";
+    }
+    identity lr-och-data-unit-c3-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-data-unit-c3-30";
+    }
+    identity lr-och-data-unit-c4-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-data-unit-c4-30";
+    }
+    identity lr-och-data-unit-c5 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-data-unit-c5";
+    }
+    identity lr-och-data-unit-c5-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-data-unit-c5-30";
+    }
+    identity lr-och-data-unit-c6 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-data-unit-c6";
+    }
+    identity lr-och-data-unit-c6-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-data-unit-c6-30";
+    }
+    identity lr-och-transport-unit-c2-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-transport-unit-c2-30";
+    }
+    identity lr-och-transport-unit-c3-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-transport-unit-c3-30";
+    }
+    identity lr-och-transport-unit-c6 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-transport-unit-c6";
+    }
+    identity lr-och-transport-unit-c6-30 {
+        base layer-rate;
+        description "Identity for Layer Rate lr-och-transport-unit-c6-30";
+    }
+
+    /* Begin-These layer rates below are solely used for termination points (TP's) and for constructing TP FDN values  */
+     identity lr-interfaceprotocol {
+        base layer-rate;
+        description "Identity for interface protocoal endpoint ";
+    }
+    identity lr-vlan {
+        base layer-rate;
+        description "Identity for ethernet vlan ";
+    }
+    identity lr-switchport {
+        base layer-rate;
+        description "Identity for ethernet switch port ";
+    }
+    identity lr-gretunnel {
+        base layer-rate;
+        description "Identity for GRE tunnel endpoints ";
+    }
+    identity lr-sonet {
+        base layer-rate;
+        description "Identity for SONE endpoints ";
+    }
+    identity lr-cem-grp {
+        base layer-rate;
+        description "Identity for CEM group endpoints ";
+    }
+    identity lr-cem-protection {
+        base layer-rate;
+        description "Identity for CEM protection endpoints ";
+    }
+    identity lr-mpls {
+        base layer-rate;
+        description "Identity for base mpls endpoint ";
+    }    
+    identity lr-mpls-tnl {
+        base layer-rate;
+        description "Identity for mpls tunnel endpoint ";
+    }
+    identity lr-mpls-tnl-lsp {
+        base layer-rate;
+        description "Identity for  mpls tunnel LSP endpoints ";
+    }
+    identity lr-cem-pseudowire {
+        base layer-rate;
+        description "Identity for CEM pseudowire endpoints ";
+    }
+    identity lr-bridge {
+        base layer-rate;
+        description "Identity for ethernet bridge endpoints ";
+    }
+    identity lr-loopback {
+        base layer-rate;
+        description "Identity for loopback interface ";
+    }
+    
+    identity lr-sr-te {
+        base lr:layer-rate;
+        description "layerrate for SR TE endpoint ";
+    }
+    
+    identity lr-evpn {
+        base lr:layer-rate;
+        description "layerrate for evpn (vpns,...) endpoint ";
+    }    
+    /* End - These layer rates above are solely used for termination points and for constructing termination point FDN values  */
+
+}

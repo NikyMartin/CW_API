@@ -1,0 +1,669 @@
+module cisco-alarms {
+    namespace "urn:cisco:params:xml:ns:yang:alarms:v1";
+    prefix alm;
+    
+    import cisco-common-types { prefix com; }
+    import ietf-yang-types { prefix yang; }
+    import ietf-inet-types { prefix inet; }
+    
+    
+    organization "Cisco Systems, Inc.";
+    contact "Cisco Systems Inc. Author: <mailto:epnm-yang@cisco.com>";
+    description
+        "The YANG module defines alarms operations and inventory for EPNM NBI  for
+        multiple layer technologies. Copyright (c) 2016 Cisco Systems Inc";
+        revision 2019-08-15 {
+            description "This revision has the following changes: - initial draft";
+            reference "none";
+    }
+
+  
+   typedef event-type  {
+    description "based on X.733, corresponds to alarm types ";
+    type enumeration {
+      enum other {value 1;}
+      enum communicationsAlarm {value 2;}
+      enum qualityOfServiceAlarm {value 3;}
+      enum processingErrorAlarm {value 4;}
+      enum equipmentAlarm {value 5;}
+      enum environmentalAlarm {value 6;}
+      enum integrityViolation {value 7;}
+      enum operationalViolation {value 8;}
+      enum physicalViolation {value 9;}
+      enum securityServiceOrMechanismViolation {value 10;}
+      enum timeDomainViolation {value 11;}
+    }
+    reference
+      "ITU Recommendation X.736, 'Information Technology - Open
+       Systems Interconnection - System Management: Security
+       Alarm Reporting Function', 1992";
+      }
+
+  typedef  severity-type {
+    type enumeration {
+      enum cleared {
+        value 1;
+      }
+      enum indeterminate {
+        value 2;
+      }
+      enum minor {
+        value 3;
+      }
+      enum warning {
+        value 4;
+      }
+      enum major {
+        value 5;
+      }
+      enum critical {
+        value 6;
+      }
+    }
+    description
+      "Severity of an alarm, including the cleared state";
+  }
+  typedef alarm-cause-type  {
+    type enumeration {
+      enum root-cause;
+      enum symptom;
+      enum cause-unknown;
+      
+      }
+    description "Root Cause indication";
+  }
+    
+  typedef service-affecting-type {
+        type enumeration {
+            enum service-affecting;
+            enum non-service-affecting;
+            enum service-affecting-unknown;
+        }
+    
+  }
+
+  typedef service-impacting-type {
+        type enumeration {
+                enum service-impacting;
+                enum non-service-impacting;
+                enum service-impacting-unknown;
+        }
+
+  }
+  
+  typedef acknowledgement-state {
+        type enumeration {
+            enum acknowledged;
+            enum unacknowledged;
+            enum ack-not-applicable;
+        }
+}
+    
+  typedef action-type {          
+        // Defined for notification
+        type enumeration {
+            enum alarm-clear;   //
+            enum alarm-acknowledge;
+            enum alarm-unacknowledge;
+            enum alarm-close;   // No support from EPNM yet
+            enum alarm-delete;
+            enum alarm-anotate;
+            enum alarm-action-unknown;
+        }
+
+  }
+    
+    identity alarm-type {
+    description
+      "Base identity for alarm types.  A unique identification of the
+       fault, not including the managed object.  Alarm types are used
+       to identify if alarms indicate the same problem or not, for
+       lookup into external alarm documentation, etc.  Different
+       managed object types and instances can share alarm types.  If
+       the same managed object reports the same alarm type, it is to
+       be considered to be the same alarm.  The alarm type is a
+       simplification of the different X.733 and 3GPP alarm IRP alarm
+       correlation mechanisms and it allows for hierarchical
+       extensions.
+
+       A 'specific-problem' can be used in addition to the alarm type
+       in order to have different alarm types based on information not
+       known at design-time, such as values in textual SNMP
+       Notification varbinds.";
+  }
+  /* Alarm type or categories to be extended more */
+   identity link-alarm {
+        base alarm-type;
+        description
+       "Alarms related to links";
+   }
+
+   identity router-alarm {
+        base alarm-type;
+        description
+          "Alarms related to router technologies";
+    }
+    identity switch-alarm {
+        base alarm-type;
+        description
+          "Alarms related to supported switch technologies";
+    }
+    identity bfd-alarm {
+        base alarm-type;
+        description
+          "Alarms related to bidirectional detection faults ";
+    }
+    identity bgp-alarm {
+        base alarm-type;
+        description
+          "Alarms related to BGP";
+    }
+      identity mpls-vpn-alarm {
+        base alarm-type;
+        description
+          "Alarms related to mpls VPNs ";
+      }
+     identity isis-alarm {
+        base alarm-type;
+        description
+          "Alarms related to ISIS links ";
+      }
+      identity ospf-alarm {
+        base alarm-type;
+        description
+          "Alarms related to OSPF links ";
+      }
+      identity rip-alarm {
+        base alarm-type;
+        description
+          "Alarms related to RIP ";
+      }
+      identity carrier-ethernet-alarm {
+        base alarm-type;
+        description
+          "Alarms related to supported Carrier-E managed resources";
+      }
+      identity  interface-equipment-alarm {
+        base alarm-type;
+        description
+          "Alarms related to supported interface and equipment resources";
+      }
+      identity security-alarm {
+        base alarm-type;
+        description
+          "Alarms related to supported security objects";
+      }
+      identity system-alarm {
+        base alarm-type;
+        description
+          "Base type for all alarms related to the system
+           This is never reported, sub-identities for the specific
+           service alarms are used in the alarms.";
+      }
+      identity system-performance-alarm {
+        base alarm-type;
+        description
+          "Alarms related to system performance ";
+      }
+      identity application-performance-alarm {
+        base alarm-type;
+        description
+          "Alarms related to application performance ";
+      }
+      identity sonet-alarm {
+        base alarm-type;
+        description
+          "Alarms related to TDM SONET resource  ";
+      }
+      identity pdh-alarm {
+        base alarm-type;
+        description
+          "Alarms related to TDM PDH resource  ";
+      }
+     identity optical-transport-alarm {
+        base alarm-type;
+        description
+          "Alarms related to optical transport ";
+      }
+      identity cmts-alarm {
+        base alarm-type;
+        description
+          "Alarms related to Cable Model Termination System ";
+      }
+    identity ptp-alarm {
+        base alarm-type;
+        description
+          "Alarms related to Precision Timing Protocol- IEEE 1588 protocol ";
+    }
+    identity sync-e-alarm {
+        base alarm-type;
+        description
+          "Alarms related to Sync-E ";
+    }
+  
+  /* Groupings  */
+  
+   grouping alarm-state-change-parameters {     // for notification due to alarm state changes.
+    description
+      "Parameters for an alarm state change.
+
+       This grouping is used both in the active alarm list's
+       status-change list and in the notification representing an
+       alarm state change.";
+
+    leaf event-time {
+      status obsolete;
+      type yang:date-and-time;
+      description
+        "The time the status of the alarm changed, as reported
+         by the node or device."; 
+    }
+    leaf received-time {
+      status obsolete;
+      type yang:date-and-time;
+      mandatory true;
+      description
+        "The time the status of the alarm changed, as detected
+         by the system.";
+    }
+    leaf alarm-text {
+      type string;
+      description
+        "Text describing the alarm state change.";
+     
+      reference
+        "Additional Text from ITU Recommendation X.733, 'Information
+          Technology
+          - Open Systems Interconnection - System Management: Alarm
+          Reporting Function', 1992";
+    }
+  }
+  
+  /* 
+  grouping base-alarm-grouping {
+    description " Basic or high level alarm attributes ";
+    container alarm-identifier {
+        description " A complex type to uniquely identify an alarm";
+        leaf event-identifier {
+            type string;
+            description "Unique event ID derived from trap ID ";
+             mandatory true;
+        }
+        leaf resource-object-ref {
+            type com:fdn;
+        }
+        leaf probable-cause {
+            type string;
+        }
+
+     }
+      leaf perceived-severity {
+            type severity-type;
+            description "Alarm perceived severity ";
+       }
+  } 
+  * 
+  */
+  grouping alarm-identifier-grouping {
+   description " A complex type to uniquely identify an alarm";
+        leaf event-identifier {
+            type string;
+            description "Unique event ID derived from trap ID ";
+            mandatory true;
+        }
+        leaf resource-object-ref {
+            type com:fdn;
+        }
+        leaf probable-cause {
+            type string;
+        }
+  
+  }
+  
+  grouping alarm-model-grouping {
+    description
+      "Parameters used to map from NCS alarm types
+       to X.733 and 3GPP alarm parameters.
+
+       This grouping is used both in the alamr-model list and in the
+       notification representing an alarm state change.";
+
+    container alarm-identifier {
+         uses alarm-identifier-grouping;
+     }
+    leaf perceived-severity {
+            type severity-type;
+            description "Alarm perceived severity ";
+    }
+   
+    leaf event-type {
+      type event-type;
+      mandatory true;
+      description 
+      "The event type as defined in X.733/X.736.";
+      reference
+        "ITU Recommendation X.733, 'Information Technology - Open Systems
+         Interconnection - System Management: Alarm Reporting
+         Function', 1992";
+    }
+    
+    leaf description {
+        type string;
+        description "Alarm description ";
+    }
+    
+    leaf category {
+        type string;
+        description " System defined alarm catgories.
+        Note: Use alarm-type base identify ";
+    }
+    
+    leaf source-object-ref {
+            type com:fdn;
+            description "FDN of the source manged object that alarm is emitted";
+    }
+    leaf source-object-name {
+            type string;
+            description "Source manged object name that the alarm is emitted; ";
+    }
+    
+    leaf source-object-id {
+        type string;
+        description "Optional. Internal id for the source object if applicable ";
+    }
+    
+    leaf node-ref {
+        type string;
+        description "Source node that the alarm is emitted; i.e. device or server";
+    }
+    leaf business-key {
+        type string;
+        description " Optional opaque field containing info for alarm correlation business logic  ";
+    }
+    leaf has-clear {
+      type union {
+        type boolean;
+        type enumeration {
+          enum unknown {
+            value 2;
+          }
+        }
+      }
+      mandatory true;
+      description
+        "Indicates if the alarm has a potential clear notification.";
+    }
+    leaf cause-type {
+        type alarm-cause-type;
+        mandatory true;
+        description
+          "Indicates if the alarm is a root-cause or a symptom.";
+      }
+     leaf ack-state {
+            type acknowledgement-state;
+            description "Indicates whether the alarm is acknowledged, un-acknowleged.";
+    }
+
+
+    leaf remote-interface-ip-address {
+       type inet:ip-address;
+       description "Any remote associated interface IP address; for Access Point, it is the controller port IP ";
+    }
+    leaf system-received-time {
+            status deprecated;
+            type yang:date-and-time;
+            description "Application or system time stamp when the alarm is first processed ";
+    }
+    leaf system-received-time-iso8601 {
+            status current;
+            type yang:date-and-time;
+            description "Application or system time stamp when the alarm is first processed ";
+    }
+    leaf system-update-time {
+            status deprecated;
+            type yang:date-and-time;
+            description "last update in the application system ";
+    
+    }
+    leaf system-update-time-iso8601 {
+            status current;
+            type yang:date-and-time;
+            description "last update in the application system ";
+    
+    }
+    leaf node-event-time {  
+        status deprecated;
+        type yang:date-and-time;
+        description "Node or device time stamp when the alarm is generated ";
+    }
+    leaf node-event-time-iso8601 {  
+       status deprecated;
+        type yang:date-and-time;
+        description "Node or device time stamp when the alarm is generated
+                     using ISO 8601 format yyyy-MM-dd'T'HH:mm:ss.SSSXXX";
+    }
+   
+    leaf probable-cause {
+      type string;
+      description
+        "The probable cause for the alarm originally defined by X.733 and
+         subsequent standards.  Due to the history of problems in
+         maintaining a standardized probable cause the probable
+         cause is not unique.  A best effort mapping of the alarm
+         to existing probable causes are used.
+         
+         
+         ";
+      reference
+        "ITU Recommendation X.733, 'Information Technology - Open Systems
+         Interconnection - System Management: Alarm Reporting
+         Function', 1992";
+    }
+    
+    leaf service-affecting {
+        description " this indicator is directly from NCS 2K devices. For EPNM SIA indicator, please refer to service-impacting attribute. ";
+        type service-affecting-type;
+    }
+ 
+    leaf service-impacting {
+        description " indicates service impacting through EPNM Service Impact Analysis  ";
+        type service-impacting-type;
+    }
+
+    leaf owner {
+            type string;
+            description "Alarm owner";
+    }
+
+   
+    leaf action-performed {
+        type action-type;
+        description "Indicates if the alarm is Acknowledges, De-acknowledged, Delete.
+            It indicates operator actions.    ";
+    }
+
+   leaf-list impacted-objects {
+      type com:fdn;
+      description
+        "Fully Distinguished Name of the Objects that might be affected by this alarm";
+
+    }
+    leaf-list root-cause-objects {
+      type com:fdn;
+      description
+        "Fully Distinguished Name of the Objects that are candidates for causing the alarm";
+    }
+    
+    container root-cause-alarm-identifier {
+        description " The corresponding root cause alarm associated with the symptom alarm ";
+        uses alarm-identifier-grouping;
+    }
+     list note-list {
+            description " List of notes added by the operator ";
+            key creator-id;
+            uses alarm-note-grouping;
+        }
+    container user-defined-fields {
+       list user-defined-field {
+          description "User defined Fields list";
+          key label;
+          uses user-defined-grouping;
+        }
+     }
+  }
+
+    grouping user-defined-grouping {
+       description "User defined label and value related to alarm";
+     leaf label {
+         type string;
+     }
+
+     leaf value {
+       type string;
+     }
+  }
+  grouping alarm-note-grouping {
+        description "Alarm notes ";
+        leaf text {
+     type string;
+   }
+   leaf creator-id {
+     type string;
+     description "Identifier of the person who annotated the alarm";
+   }
+   leaf note-time {
+       status deprecated;
+     type yang:date-and-time;
+   }
+   leaf note-time-iso8601 {
+       status current;
+     type yang:date-and-time;
+    }
+
+}
+
+  grouping alarm-destination-grouping {
+      description "Alarm destination";
+      leaf destination{
+          type string;
+      }
+  }
+  
+  /* Alarm actions  */
+  
+ container alarm-control {
+        description "Alarm operation control on an existing alarm ";
+        leaf alarm-identifer-ref {
+            type com:fdn;
+        }
+        leaf modified-severity {
+            type severity-type;
+            description "Alarm severity to be modified.  ";
+        }
+        leaf action {
+            type action-type;
+            description "actions include ack, de-ack, clear of an existing alarm ";
+        }
+        uses alarm-note-grouping;
+        // add or modify a note
+
+    }
+
+
+  
+  grouping alarm-summary-counters {
+        description
+          "A set of alarm summary counters by alarm catagory";
+
+        leaf catagory {
+            type identityref {
+                base alarm-type;
+            }
+        }
+        leaf critical-count {
+          type yang:gauge32;
+          description
+            "This object shows the number of currently active
+             alarms with perceived severity 'critical'.";
+        }
+
+        leaf major-count {
+          type yang:gauge32;
+          description
+            "This object shows the number of currently active alarms with
+             perceived severity 'major'.";
+        }
+
+        leaf minor-count {
+          type yang:gauge32;
+          description
+            "This object shows the number of currently active
+             alarms with perceived severity 'minor'.";
+        }
+
+      }
+  
+    container alarm {
+        description "Alarm Object";
+        uses alarm-model-grouping;
+        list note {
+            key creator-id;
+             uses alarm-note-grouping;
+        }
+        
+       list alarm-destination {
+           description
+               "Supported user groups for alarm, null value means valid for all user groups";
+          uses alarm-destination-grouping;
+          key destination;
+    }
+        
+        
+    }
+  
+    container alarm-summary-by-category {
+        description " ";
+        uses alarm-summary-counters;
+    
+    }
+    
+    
+    grouping alarm-list-grouping {
+        description
+          "This grouping is used both in the alamr-model list and in the
+           notification representing an alarm state change.";
+        container alarm-list {
+               list  alarm {
+                description "holder for list of alarm objects";
+                key alarm-id;
+                leaf alarm-id {
+                    type uint32;
+                    description "Identifier of the person who annotated the alarm ";
+                }
+                uses alarm-model-grouping;
+            }
+        }
+    }
+    
+    // alarms with given a service 
+    container service-alarm-list {
+        description "Support for given service, returns a list of alarms ";
+       
+        leaf cfs_fdn {
+            type com:fdn;
+            description " Customer facing service FDN";
+        }
+        list alarm {
+            config false;
+            uses alarm-model-grouping;
+            description "Alarm object ";
+        }
+    }
+    container alarm-request{
+        uses alarm-list-grouping;
+    }
+    
+    container alarm-response{
+        uses alarm-list-grouping;
+    }
+ }
