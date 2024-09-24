@@ -1,5 +1,13 @@
 #!/usr/bin/python
 
+# This script generates a device inventory table leveraging EMF API
+# /restconf/data/v1/cisco-resource-physical:node
+# With filter ?name=" + node_name
+# Tested on CNC rel 5.0
+
+# April 24th 2023
+# First Release
+
 import requests
 import json
 import urllib3
