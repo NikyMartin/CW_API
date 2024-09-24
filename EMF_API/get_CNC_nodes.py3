@@ -1,5 +1,16 @@
 #!/usr/bin/python
 
+# Syntax: get_CNC_node.py3 <CNC IP> <CNC Username> <CNC User Password> and DLM_API or EMF_API
+
+# This script generates a device list leveraging DLM and EMF API
+# DLM   /crosswork/inventory/v1/nodes/query
+# EMF   /restconf/data/v1/cisco-resource-physical:node (using filter ?.depth=1)
+# It leverages XML as encoding since JSON is broken in 5.0
+# Tested on CNC rel 5.0
+
+# April 19th 2023
+# First Release
+
 import requests
 import json
 import urllib3
