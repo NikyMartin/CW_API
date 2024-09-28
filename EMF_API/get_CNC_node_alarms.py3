@@ -1,21 +1,24 @@
 #!/usr/bin/python
 
 # This script leverages CNC RESTCONF API to retrieve all active alarms on a give node
-# It uses a resourse endpoint deprecated (but still working) in CNC rel 7.0
-# /restconf/data/v1/cisco-rtm:alarm
-# New one is
-# /crosswork/alarm/restconf/data/v2/rtm:alarm
-# Already present in this script but commented to let the scrip work with 7.0 and previous releases
-# Will keep it till I find a way to use different endpoints depending on the CNC release version
-# Also need to add pagination. That means it works with less then 100 entries for now
+# It uses different resource endpoints depending on the CNC release
+# CNC 6.0   /restconf/data/v1/cisco-rtm:alarm
+# CNC 7.0   /crosswork/alarm/restconf/data/v2/rtm:alarm
+# Although still working, v1 has been deprecated in CNC 7.0
+# In CNC 7.0 MD changed form CISCO_EPNM to CISCO_EMS, thus v1 cant be used anyway
+# Need to add pagination. That means it works with less then 100 entries for now
 #
 # Tested on CNC rel 7.0, both SVM and cluster based installs
-# NOTE: in CNC 7.0 MD changed form CISCO_EPNM to CISCO_EMS
+# Tested on CNC 6.0 and 7.0
 #
-
-# September 27rd 2024
+# September 28th 2024
+# Added CNC version control and Device Timestap
+#
+# September 27th 2024
 # First Release
-
+#
+# Syntax: get_CNC_node_alarms.py3 <CNC IP> <CNC_port> <CNC Username> <CNC user Password> <Node_Name>
+#
 
 import requests
 import json
@@ -142,6 +145,52 @@ def run_get(url,encoding):
         exit(1)
 
 ######################################
+# Following function performs POST
+# request on CW API
+######################################
+
+def run_post(url):
+    print("Executing POST", url)
+    auth_headers = {
+        'accept': 'application/json',
+        'Authorization': token,
+    }
+
+    try:
+        time.sleep(0.01)
+        response = requests.post(url, headers=auth_headers, verify=False)
+        print("Status Code: ", response.status_code)
+        if 200 <= response.status_code <= 210:
+            return response.text
+#        print(response.text) should be parsed. It wont print as is
+        print("Could not execute POST "+url)
+        print("\nIf Status Code is 404, it can be common inventory cAPP is not installed\n")
+        exit(1)
+    except Exception as e:
+        print(str(e))
+        print("Cannot run POST "+url)
+        exit(1)
+
+    return response.text
+
+######################################
+# Following function returns first 3
+# characters from INFRA version
+# Ex: 6.0 or 7.0
+######################################
+def get_CNC_Version():
+    url = base_url + "/crosswork/platform/v2/capp/applicationdata/query"
+    api_output = json.loads(run_post(url))
+    app_list = api_output["application_data_list"]
+    for application in app_list:
+        app_name = application["application_id"]
+        if app_name == "capp-infra":
+            infra_version = application["version"][:3]
+    #print(json.dumps(result, indent=4))
+
+    return infra_version
+
+######################################
 #               START
 ######################################
 
@@ -168,18 +217,23 @@ def parse_alarms(alarms):
             creationTimestamp = alarm["alm.system-received-time"]
         except:
             creationTimestamp = "NA"
+        try:
+            deviceTimestamp = alarm["alm.node-event-time"]
+        except:
+            deviceTimestamp = "NA"
 
-        alarm_list.append([alarm_severity, alarm_description, event_type, source_object, creationTimestamp])
+        alarm_list.append([alarm_severity, alarm_description, event_type, source_object, creationTimestamp,
+                           deviceTimestamp])
 
     return(alarm_list)
 
-def get_node_alarms(node_name):
-    # Next endpoint has been introduced in CNC 7.0
-    # Uncomment it if ndeeded in future versions where v1 will be removed
-    #url = base_url + "/crosswork/alarm/restconf/data/v2/rtm:alarm?alarmtype=device&nd-ref=MD=CISCO_" \
-    #                 "EMS!ND=" + node_name + "&perceived-severity=critical,major,minor,warning"
-    url = base_url + "/restconf/data/v1/cisco-rtm:alarm?alarmtype=device&nd-ref=MD=CISCO_" \
-                     "EPNM!ND=" + node_name + "&perceived-severity=critical,major,minor,warning"
+def get_node_alarms(node_name, infra_version):
+    if infra_version == "6.0":
+       url = base_url + "/restconf/data/v1/cisco-rtm:alarm?alarmtype=device&nd-ref=MD=CISCO_" \
+                         "EPNM!ND=" + node_name + "&perceived-severity=critical,major,minor,warning"
+    if infra_version == "7.0":
+       url = base_url + "/crosswork/alarm/restconf/data/v2/rtm:alarm?alarmtype=device&nd-ref=MD=CISCO_" \
+                     "EMS!ND=" + node_name + "&perceived-severity=critical,major,minor,warning"
 
     api_output = json.loads(run_get(url, "json"))
     lastIndex = api_output["com.response-message"]["com.header"]["com.lastIndex"]
@@ -194,7 +248,7 @@ def get_node_alarms(node_name):
 
     print("\nNode", node_name, "has", len(alarm_list), "alarms\n")
     print(tabulate(sorted(alarm_list), headers=(['Severity', 'Description', 'Event Type', 'Managed Object',
-                                                 'Creation Timestamp'])))
+                                                 'Creation Timestamp', 'Device Timestamp'])))
 
 
 
@@ -203,7 +257,8 @@ def get_node_alarms(node_name):
 ######################################
 if __name__ == "__main__":
     if len(sys.argv)!=6:
-       print('\nSyntax must be: change_state_bulk.py <CNC IP> <CNC_port> <CNC Username> <Node_Name\n')
+       print('\nSyntax must be: get_CNC_node_alarms.py3 <CNC IP> <CNC_port> <CNC Username> <CNC user Password> '
+             '<Node_Name>\n')
        exit()
     scripts, server_ip, cw_port_string, username, password, node_name = sys.argv
 
@@ -231,7 +286,15 @@ if __name__ == "__main__":
     ticket = get_ticket()
     token = get_token()
 
-    get_node_alarms(node_name)
+    cnc_version = get_CNC_Version()
+    if cnc_version not in ["6.0", "7.0"]:
+        print("\nThis script has been only validated against releases 6.0 and 7.0")
+        print("Current version is " + cnc_version + " Exiting")
+        delete_ticket()
+        print()
+        exit()
+
+    get_node_alarms(node_name, cnc_version)
 
     delete_ticket()
 
