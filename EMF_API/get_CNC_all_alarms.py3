@@ -57,7 +57,7 @@ def isOpen(server_ip,port):
 ######################################
 
 def get_ticket():
-    print("Executing GET Ticket")
+    print("Executing Get Ticket")
     params = (
         ('username', username),
         ('password', password),
@@ -76,7 +76,7 @@ def get_ticket():
 ######################################
 
 def get_token():
-    print("Executing GET Token")
+    print("Executing Get Token")
     params = (
         ('service', 'https://'+server_ip+':30603/app-dashboard'),
     )
@@ -90,7 +90,7 @@ def get_token():
 ######################################
 
 def delete_ticket():
-    print("\nExecuting delete Ticket")
+    print("\nExecuting Delete Ticket")
     url = base_url + "/crosswork/sso/v1/tickets/"+ticket
     auth_headers = {
         'Content-Type': 'application/json',
@@ -174,6 +174,7 @@ def run_post(url):
 # Ex: 6.0 or 7.0
 ######################################
 def get_CNC_Version():
+    print("Checking CNC Version")
     url = base_url + "/crosswork/platform/v2/capp/applicationdata/query"
     api_output = json.loads(run_post(url))
     app_list = api_output["application_data_list"]
@@ -220,12 +221,13 @@ def parse_alarms(alarm_list, alarms):
         except:
             deviceTimestamp = "NA"
 
-        alarm_list.append([alarm_severity, node_name, alarm_description, event_type, source_object, creationTimestamp,
+        alarm_list.append([alarm_severity, node_name, alarm_description[:120], event_type, source_object, creationTimestamp,
                            deviceTimestamp])
 
     return(alarm_list)
 
 def get_all_alarms(infra_version):
+    print("Retrieving alarms")
     start_index = 0
     alarm_list = []  # inizializing alarm list
 
@@ -300,6 +302,7 @@ if __name__ == "__main__":
         delete_ticket()
         print()
         exit()
+
 
     get_all_alarms(cnc_version)
 
