@@ -244,8 +244,9 @@ def get_all_alarms(infra_version):
         lastIndex = api_output["com.response-message"]["com.header"]["com.lastIndex"]
 
         if lastIndex == -1 and len(alarm_list) == 0: # Control if output has no alarms
-            print("No alarm found. Exiting")
+            print("\nNo alarm found. Exiting")
             delete_ticket()
+            print()
             exit()
 
         if lastIndex == -1:
