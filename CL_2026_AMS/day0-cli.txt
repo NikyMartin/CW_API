@@ -1,0 +1,105 @@
+!! IOS XR Configuration
+hostname node-16
+banner login $
+      _____________________________
+     | SR/XTC/WAE/NSO dCloud Lab   |
+     | Learn, Try, Question        |
+     | We are here to help!!       |
+     | All actions performed on    |
+     | this device are logged.     |
+      -----------------------------
+
+          , ,\ ,'\,'\ ,'\ ,\ ,
+    ,  ;\/ \' `'     `   '  /|
+    |\/                      |
+    :                        |
+    :                        |
+     |                       |
+     |                       |
+     :               -.     _|
+      :                \     `.
+      |         ________:______\
+      :       ,'o       / o    ;
+      :       \       ,'-----./
+       \_      `--.--'        )
+      ,` `.              ,---'|
+      : `                     |
+       `,-'                   |
+       /      ,---.          ,'
+    ,-'            `-,------'
+   '   `.        ,--'
+         `-.____/
+ -BE AWESOME!-           \
+$
+logging trap informational
+logging events level informational
+logging format rfc5424
+logging console notifications
+logging buffered 10000000
+logging 198.18.1.219 vrf default severity debugging port 30514
+logging source-interface Loopback0
+logging hostnameprefix node-16
+service timestamps log datetime localtime msec show-timezone year
+service timestamps debug datetime msec
+logging events link-status software-interfaces
+username cisco
+ group root-lr
+ group sysadmin
+ group cisco-support
+ secret 10 $6$mGYKUq36YJaGs0VN$NR6KH.XO7//WHrhFZRM/lTMXjBY5rfMPZyyB73wcIrvqlTQTEhmmIujTKvJKMdjD25/H5Zuh3ouiK3pFCNV3c1
+!
+grpc
+ port 57400
+ no-tls
+ address-family ipv4
+ service-layer
+ !
+!
+line console
+ exec-timeout 0 0
+ width 0
+ absolute-timeout 0
+ session-timeout 0
+!
+line default
+ exec-timeout 0 0
+ absolute-timeout 0
+ session-timeout 0
+!
+vty-pool default 0 50
+snmp-server ifindex persist
+snmp-server trap link ietf
+snmp-server host 198.18.1.219 traps version 2c cisco udp-port 31062
+snmp-server community cisco RO
+snmp-server traps snmp linkup
+snmp-server traps snmp linkdown
+snmp-server packetsize 4096
+snmp-server trap-source Loopback0
+ntp
+ server 198.18.128.1
+!
+netconf-yang agent
+ ssh
+!
+interface Loopback0
+ ipv4 address 198.19.1.16 255.255.255.255
+ ipv6 address 2010::16/128
+interface MgmtEth0/RP0/CPU0/0
+ ipv4 address 198.18.1.56 255.255.255.0
+!
+router static
+ address-family ipv4 unicast
+  10.16.0.0/15 198.18.1.1
+  198.18.128.0/18 198.18.1.1
+ !
+!
+xml agent tty
+!
+netconf agent tty
+!
+telnet vrf default ipv4 server max-servers 10
+ssh server rate-limit 600
+ssh server session-limit 110
+ssh server v2
+ssh server vrf default
+ssh server netconf vrf default
