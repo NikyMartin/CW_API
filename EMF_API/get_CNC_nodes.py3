@@ -20,6 +20,7 @@ import sys
 import socket
 import urllib
 from datetime import datetime
+import ssl
 
 now = datetime.now()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -62,7 +63,7 @@ def get_ticket():
         ('password', password),
     )
     url = base_url + "/crosswork/sso/v1/tickets"
-    response = requests.post(url, headers=headers, params=params, verify=False)
+    response = requests.post(url, headers=headers, params=params, verify=ssl.CERT_NONE)
     if response.status_code in [200,201]:
         return response.text
     else:
@@ -84,6 +85,24 @@ def get_token():
     url = base_url + "/crosswork/sso/v1/tickets/"+ticket
     response = requests.post(url, headers=headers, params=params, verify=False)
     return response.text
+
+######################################
+# Following function deletes CW Ticket
+######################################
+def delete_ticket():
+    print("\nExecuting Delete Ticket")
+    url = base_url + "/crosswork/sso/v1/tickets/"+ticket
+    auth_headers = {
+        'Content-Type': 'application/json',
+        'Authorization': token,
+    }
+    try:
+        response = requests.delete(url, headers=auth_headers, verify=False)
+        print("Status Code: ", response.status_code)
+    except Exception as e:
+        print(str(e))
+        print("Cannot run DELETE "+url)
+        exit()
 
 ######################################
 # Following function performs POST
@@ -219,15 +238,19 @@ def getNodesEMS(server_ip, user, pwd):
                 lifecycle_state = node.find('{urn:cisco:params:xml:ns:yang:resource:device}lifecycle-state').text
             except:
                 lifecycle_state = "NA"
-            try:
+            try: # TO FIX. For now not used. Need to add extra code to parse
                 collection_status = node.find('{urn:cisco:params:xml:ns:yang:resource:device}collection-status').text
             except:
                 collection_status = "NA"
+            try:
+                collection_time = node.find('{urn:cisco:params:xml:ns:yang:resource:device}collection-time').text
+            except:
+                collection_time = "NA"
 
             node_list.append([node_name, ip_address, node_product_type, sw_version, node_communication_state,
-                              lifecycle_state])
+                              lifecycle_state, collection_time])
         print(tabulate(sorted(node_list), headers=(['Device Name', 'IP Address', 'Product Type', 'SW Version',
-                                                    'Communication State', 'Lifecycle State'])))
+                                                    'Communication State', 'Lifecycle State', 'Collection Time'])))
 
     else:
         print("No nodes found")
@@ -242,10 +265,20 @@ def timeStamp():
 ################################
 
 if __name__ == "__main__":
-    if len(sys.argv)!=5:
-       print('\nMust pass CNC IP, CNC User Name, CNC User Password and API Type\n')
+    if len(sys.argv)!=6:
+       print('\nMust pass CNC IP, CNC Port, CNC User Name, CNC User Password and API Type (DLM_API / EMS_API)\n')
        exit()
-    scripts, server_ip, username, password, API = sys.argv
+    scripts, server_ip, cw_port_string, username, password, API = sys.argv
+
+    try:
+        cw_port = int(cw_port_string)
+    except:
+        print(str(cw_port) + " is not an integer. Exiting")
+        exit()
+
+    if not (1024 <= cw_port <= 65535):
+        print(str(cw_port) + " not in [1040 - 65535] range. Exiting")
+        exit()
 
 # Decode password from HTML to non-ASCI
 
@@ -254,19 +287,23 @@ if __name__ == "__main__":
     timeStamp()
     print("\nChecking Server Port")
 
-    if not isOpen(server_ip, 30603):
+    if not isOpen(server_ip, cw_port):
         print("\nERROR: " + server_ip + " is not reachable, either the server is down or port 30603 is filtered\n")
         exit()
 
-    base_url = "https://" + server_ip + ":30603"
+    base_url = "https://" + server_ip + ":" + cw_port_string
     ticket = get_ticket()
     token = get_token()
 
     if API == "DLM_API":
         getNodesDLM()
+        delete_ticket()
+        print("\n#### Script Execution Completed !!! ####\n")
         exit()
     if API == "EMS_API":
         getNodesEMS(server_ip, username, password)
+        delete_ticket()
+        print("\n#### Script Execution Completed !!! ####\n")
         exit()
 
     print("No API (must be DLM_API or EMF_API)??")
