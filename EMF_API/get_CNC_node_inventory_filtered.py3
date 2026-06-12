@@ -36,21 +36,10 @@ headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
 }
 
-######################################
-# Following function returns CW ticket
-######################################
+def timeStamp():
+    current_time = now.strftime("%H:%M:%S")
+    print("\nServer Time =", current_time)
 
-def printAllResponse(response):
-    print("Status Code: ",response.status_code)
-    print("Headers: ",response.headers)
-    print("Url: ",response.url)
-    print("History: ",response.history)
-    print("Encoding: ",response.encoding)
-    print("Reason: ",response.reason)
-    print("Cookies: ",response.cookies)
-    print("Elapsed: ",response.elapsed)
-    print("Request: ",response.request)
-    print("Content: ",response._content)
 
 def isOpen(server_ip,port):
    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -60,6 +49,10 @@ def isOpen(server_ip,port):
       return True
    except:
       return False
+
+######################################
+# Following function returns CW ticket
+######################################
 
 def get_ticket():
     print("Executing GET Ticket")
@@ -92,6 +85,25 @@ def get_token():
     return response.text
 
 ######################################
+# Following function deletes CW Ticket
+######################################
+
+def delete_ticket():
+    print("\nExecuting Delete Ticket")
+    url = base_url + "/crosswork/sso/v1/tickets/"+ticket
+    auth_headers = {
+        'Content-Type': 'application/json',
+        'Authorization': token,
+    }
+    try:
+        response = requests.delete(url, headers=auth_headers, verify=False)
+        print("Status Code: ", response.status_code)
+    except Exception as e:
+        print(str(e))
+        print("Cannot run DELETE "+url)
+        exit()
+
+######################################
 # Following function performs POST
 # request on CW API
 ######################################
@@ -118,6 +130,57 @@ def run_get(url,encoding):
 
     return response.text
 
+######################################
+# Following function performs POST
+# request on CW API
+######################################
+
+def run_post(url):
+    print("Executing POST", url)
+    auth_headers = {
+        'accept': 'application/json',
+        'Authorization': token,
+    }
+
+    try:
+        time.sleep(0.01)
+        response = requests.post(url, headers=auth_headers, verify=False)
+        print("Status Code: ", response.status_code)
+        if 200 <= response.status_code <= 210:
+            return response.text
+#        print(response.text) should be parsed. It wont print as is
+        print("Could not execute POST "+url)
+        print("\nIf Status Code is 404, it can be common inventory cAPP is not installed\n")
+        exit(1)
+    except Exception as e:
+        print(str(e))
+        print("Cannot run POST "+url)
+        exit(1)
+
+    return response.text
+
+######################################
+# Following function returns first 3
+# characters from INFRA version
+# Ex: 6.0 or 7.0
+######################################
+def get_CNC_Version():
+    print("Checking CNC Version")
+    url = base_url + "/crosswork/platform/v2/capp/applicationdata/query"
+    api_output = json.loads(run_post(url))
+    app_list = api_output["application_data_list"]
+    for application in app_list:
+        app_name = application["application_id"]
+        if app_name == "capp-infra":
+            infra_version = application["version"][:3]
+    #print(json.dumps(result, indent=4))
+
+    return infra_version
+
+######################################
+#               START
+######################################
+
 def is_equipment_list(node):
     print("Checking if node has an equipment list")
     try:
@@ -125,10 +188,6 @@ def is_equipment_list(node):
         return True
     except:
         return False
-
-def timeStamp():
-    current_time = now.strftime("%H:%M:%S")
-    print("\nServer Time =", current_time)
 
 def getNodeInventory():
     url = base_url + "/restconf/data/v1/cisco-resource-physical:node?name=" + node_name
@@ -175,8 +234,14 @@ def getNodeInventory():
                             operational_state = equipment.find('{urn:cisco:params:xml:ns:yang:restconf:resource:physical}operational-state-code').text
                         except:
                             operational_state = "NA"
-                        if serial_number != "NA" and 'IDPROM' not in equipment_name:
-                            node_list.append([equipment_name, equipment_description, equipment_type, operational_state, product_id, serial_number])
+                        try:
+                            service_state = equipment.find(
+                                '{urn:cisco:params:xml:ns:yang:restconf:resource:physical}service-state').text
+                        except:
+                            service_state = "NA"
+                        if serial_number != "NA" and serial_number != "N/A" and 'IDPROM' not in equipment_name:
+                            node_list.append([equipment_name, equipment_description, equipment_type, operational_state, service_state,
+                                              product_id, serial_number])
 
                 except Exception as e:
                     print(str(e))
@@ -187,7 +252,7 @@ def getNodeInventory():
                 exit()
 
         print("Node " + node_name + " has " + str(len(node_list)) + " filtered equipments\n")
-        print(tabulate(sorted(node_list), headers=(['Equipment Name', 'Equipment Description', 'Equipment Type', 'Operational State',
+        print(tabulate(sorted(node_list), headers=(['Equipment Name', 'Equipment Description', 'Equipment Type', 'Operational State', 'Service State',
                                                     'Product ID', 'Serial Number'])),"\n")
     else:
         print("Node "+node_name+" not found")
@@ -196,22 +261,45 @@ def getNodeInventory():
 #           MAIN
 ################################
 if __name__ == "__main__":
-    if len(sys.argv)!=5:
-       print('\nMust pass CNC IP, CNC Username, CNC User Password and Node Name\n')
+    if len(sys.argv)!=6:
+       print('\nSyntax must be: <SCRIPT_NAME> <CNC IP> <CNC_port> <CNC Username> <CNC user Password> <Node Name>\n')
        exit()
-    scripts, server_ip, username, password, node_name = sys.argv
+    scripts, server_ip, cw_port_string, username, password, node_name = sys.argv
+
+    try:
+        cw_port = int(cw_port_string)
+    except:
+        print(str(cw_port) + " is not an integer. Exiting")
+        exit()
+
+    if not (1024 <= cw_port <= 65535):
+        print(str(cw_port) + " not in [1040 - 65535] range. Exiting")
+        exit()
 
 # Decode password from HTML to non-ASCI
     password = urllib.parse.unquote(password)
 
     timeStamp()
     print("\nChecking Server Port")
-    if not isOpen(server_ip, 30603):
-        print("\nERROR: " + server_ip + " is not reachable, either the server is down or port 30603 is filtered\n")
+    if not isOpen(server_ip, cw_port):
+        print("\nERROR: " + server_ip + " is not reachable, either the server is down or port " + str(cw_port)
+              + " is filtered\n")
         exit()
 
-    base_url = "https://" + server_ip + ":30603"
+    base_url = "https://" + server_ip + ":" + cw_port_string
     ticket = get_ticket()
     token = get_token()
 
+    cnc_version = get_CNC_Version()
+    if cnc_version not in ["6.0", "7.0", "7.1", "7.2"]:
+        print("\nThis script has been only validated against releases 6.0 and 7.0")
+        print("Current version is " + cnc_version + " Exiting")
+        delete_ticket()
+        print()
+        exit()
+
     getNodeInventory()
+
+    delete_ticket()
+
+    print("\n#### Script Execution Completed !!! ####\n")
